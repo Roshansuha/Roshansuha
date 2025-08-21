@@ -657,6 +657,7 @@
             user-select: none;
             z-index: 10;
             transition: background 0.3s ease;
+            z-index: 20;
         }
 
         .hero1 .logo-heart:hover {
@@ -698,6 +699,7 @@
             text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
             user-select: none;
             max-width: 70%;
+            z-index: 10;
         }
 
         @keyframes swipeLeft {
@@ -750,6 +752,7 @@
             max-width: 65%;
             text-align: right;
             text-shadow: 0 0 5px rgba(0, 0, 0, 0.6);
+            z-index: 10;
         }
 
         /* Hero 4 */
@@ -1749,11 +1752,32 @@
         const registerLink = document.getElementById('register-link');
         const profileLink = document.getElementById('profile-link');
         const logoutBtn = document.getElementById('logout-btn');
+        const navToggle = document.getElementById('nav-toggle');
+        const navList = document.getElementById('header-nav');
+        const authModal = document.getElementById('auth-modal');
+        const loginTab = document.getElementById('login-tab');
+        const registerTab = document.getElementById('register-tab');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const cancelLogin = document.getElementById('cancel-login');
+        const cancelRegister = document.getElementById('cancel-register');
+        const submitLogin = document.getElementById('submit-login');
+        const submitRegister = document.getElementById('submit-register');
+        const switchToRegister = document.getElementById('switch-to-register');
+        const switchToLogin = document.getElementById('switch-to-login');
+        const loginError = document.getElementById('login-error');
+        const registerError = document.getElementById('register-error');
+        const userDropdown = document.getElementById('user-dropdown');
+        const userBtn = document.getElementById('user-btn');
+        const userMenu = document.getElementById('user-menu');
 
         // Initialize the app
         function init() {
             // Set current year
             currentYear.textContent = new Date().getFullYear();
+
+            // Set up event listeners
+            setupEventListeners();
 
             // Load settings
             loadSettings();
@@ -1779,9 +1803,6 @@
                 }
             });
 
-            // Event listeners
-            sendOrderBtn.addEventListener('click', showCustomerForm);
-
             // Countdown Timer
             function updateCountdown() {
                 const countdownDate = new Date();
@@ -1803,6 +1824,238 @@
 
             setInterval(updateCountdown, 1000);
             updateCountdown();
+        }
+
+        // Set up all event listeners
+        function setupEventListeners() {
+            // Mobile menu toggle
+            navToggle.addEventListener('click', () => {
+                navList.classList.toggle('show');
+            });
+
+            // User dropdown toggle
+            userBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userDropdown.classList.toggle('show');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!userMenu.contains(e.target)) {
+                    userDropdown.classList.remove('show');
+                }
+            });
+
+            // Auth modal triggers
+            loginLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                userDropdown.classList.remove('show');
+                showAuthModal('login');
+            });
+
+            registerLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                userDropdown.classList.remove('show');
+                showAuthModal('register');
+            });
+
+            // Auth modal tabs
+            loginTab.addEventListener('click', () => switchAuthTab('login'));
+            registerTab.addEventListener('click', () => switchAuthTab('register'));
+
+            // Auth form actions
+            cancelLogin.addEventListener('click', hideAuthModal);
+            cancelRegister.addEventListener('click', hideAuthModal);
+            submitLogin.addEventListener('click', handleLogin);
+            submitRegister.addEventListener('click', handleRegister);
+            switchToRegister.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchAuthTab('register');
+            });
+            switchToLogin.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchAuthTab('login');
+            });
+
+            // Logout
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                handleLogout();
+            });
+
+            // Cart icon
+            cartIcon.addEventListener('click', toggleCartSummary);
+
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === authModal) {
+                    hideAuthModal();
+                }
+            });
+
+            // Enter key support for forms
+            document.getElementById('login-email').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleLogin();
+            });
+
+            document.getElementById('login-password').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleLogin();
+            });
+
+            document.getElementById('register-name').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleRegister();
+            });
+
+            document.getElementById('register-email').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleRegister();
+            });
+
+            document.getElementById('register-phone').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleRegister();
+            });
+
+            document.getElementById('register-address').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleRegister();
+            });
+
+            document.getElementById('register-password').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleRegister();
+            });
+
+            document.getElementById('register-confirm').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleRegister();
+            });
+        }
+
+        // Show auth modal with specified tab
+        function showAuthModal(tab) {
+            authModal.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+            switchAuthTab(tab);
+        }
+
+        // Hide auth modal
+        function hideAuthModal() {
+            authModal.style.display = 'none';
+            document.body.style.overflow = ''; // Re-enable scrolling
+            // Clear form errors
+            loginError.style.display = 'none';
+            registerError.style.display = 'none';
+        }
+
+        // Switch between login and register tabs
+        function switchAuthTab(tab) {
+            if (tab === 'login') {
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+            } else {
+                loginTab.classList.remove('active');
+                registerTab.classList.add('active');
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+            }
+        }
+
+        // Handle login form submission
+        function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                loginError.textContent = 'Please fill in all fields';
+                loginError.style.display = 'block';
+                return;
+            }
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // Login successful
+                    hideAuthModal();
+                    // Clear form
+                    document.getElementById('login-email').value = '';
+                    document.getElementById('login-password').value = '';
+                })
+                .catch((error) => {
+                    loginError.textContent = error.message;
+                    loginError.style.display = 'block';
+                });
+        }
+
+        // Handle register form submission
+        function handleRegister() {
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const phone = document.getElementById('register-phone').value;
+            const address = document.getElementById('register-address').value;
+            const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-confirm').value;
+
+            // Validation
+            if (!name || !email || !phone || !address || !password || !confirm) {
+                registerError.textContent = 'Please fill in all fields';
+                registerError.style.display = 'block';
+                return;
+            }
+
+            if (password !== confirm) {
+                registerError.textContent = 'Passwords do not match';
+                registerError.style.display = 'block';
+                return;
+            }
+
+            if (password.length < 6) {
+                registerError.textContent = 'Password must be at least 6 characters';
+                registerError.style.display = 'block';
+                return;
+            }
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // User created successfully, now save additional info
+                    const user = userCredential.user;
+
+                    return db.collection('users').doc(user.uid).set({
+                        name: name,
+                        email: email,
+                        phone: phone,
+                        address: address,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                })
+                .then(() => {
+                    // Registration complete
+                    hideAuthModal();
+                    // Clear form
+                    document.getElementById('register-name').value = '';
+                    document.getElementById('register-email').value = '';
+                    document.getElementById('register-phone').value = '';
+                    document.getElementById('register-address').value = '';
+                    document.getElementById('register-password').value = '';
+                    document.getElementById('register-confirm').value = '';
+                })
+                .catch((error) => {
+                    registerError.textContent = error.message;
+                    registerError.style.display = 'block';
+                });
+        }
+
+        // Handle logout
+        function handleLogout() {
+            auth.signOut().then(() => {
+                console.log("User signed out");
+                userDropdown.classList.remove('show');
+            }).catch((error) => {
+                console.error("Sign out error:", error);
+            });
+        }
+
+        // Toggle cart summary visibility
+        function toggleCartSummary() {
+            if (cart.length > 0) {
+                cartSummary.classList.toggle('visible');
+            }
         }
 
         // Load settings from Firebase
@@ -1942,14 +2195,14 @@
                     // Hero 2 - completely rebuild the content
                     if (data.hero2Image) {
                         let hero2Content = `
-                    <div class="swipe" style="background-image: url('${data.hero2Image}')"></div>
-                `;
+                <div class="swipe" style="background-image: url('${data.hero2Image}')"></div>
+            `;
 
                         // Only add caption if it exists in Firebase
                         if (data.hero2Caption) {
                             hero2Content += `
-                        <div class="caption">${data.hero2Caption}</div>
-                    `;
+                    <div class="caption">${data.hero2Caption}</div>
+                `;
                         }
 
                         hero2Slider.innerHTML = hero2Content;
@@ -1982,9 +2235,9 @@
                 console.error("Error loading homepage content:", error);
                 // Fallback content if Firebase fails
                 hero2Slider.innerHTML = `
-            <div class="swipe" style="background-image: url('https://via.placeholder.com/800x400')"></div>
-            <div class="caption">Featured Collection</div>
-        `;
+        <div class="swipe" style="background-image: url('https://via.placeholder.com/800x400')"></div>
+        <div class="caption">Featured Collection</div>
+    `;
                 hero3Caption.textContent = "New Arrivals";
             });
 
@@ -1998,8 +2251,8 @@
                     collectionCard.className = 'collection-card';
                     collectionCard.style.backgroundImage = `url('${collection.imageUrl}')`;
                     collectionCard.innerHTML = `
-                <div class="overlay">${collection.title}</div>
-            `;
+            <div class="overlay">${collection.title}</div>
+        `;
                     collectionsGrid.appendChild(collectionCard);
                 });
             });
@@ -2049,9 +2302,9 @@
             logoHeart.className = 'logo-heart';
             logoHeart.title = 'Click me for hearts!';
             logoHeart.innerHTML = `
-            <img src="https://res.cloudinary.com/dm5pceu1k/image/upload/v1752642122/ynhwlvttp4btyvs0sohk.png" alt="Logo" />
-            <span id="hero1-logo-text">Kanoz</span>
-        `;
+        <img src="https://res.cloudinary.com/dm5pceu1k/image/upload/v1752642122/ynhwlvttp4btyvs0sohk.png" alt="Logo" />
+        <span id="hero1-logo-text">Kanoz</span>
+    `;
             hero1Slider.appendChild(logoHeart);
 
             // Set up slider animation
@@ -2217,25 +2470,25 @@
         // Update the CSS animation to work with the new approach
         const style = document.createElement('style');
         style.textContent = `
-    @keyframes scroll-left {
-        0% {
-            transform: translateX(0%);
-        }
-        100% {
-            transform: translateX(-50%);
-        }
+@keyframes scroll-left {
+    0% {
+        transform: translateX(0%);
     }
-    
-    .carousel-track {
-        display: flex;
-        gap: 20px;
-        animation: scroll-left 30s linear infinite;
-        will-change: transform;
+    100% {
+        transform: translateX(-50%);
     }
-    
-    .carousel-track:hover {
-        animation-play-state: paused;
-    }
+}
+
+.carousel-track {
+    display: flex;
+    gap: 20px;
+    animation: scroll-left 30s linear infinite;
+    will-change: transform;
+}
+
+.carousel-track:hover {
+    animation-play-state: paused;
+}
 `;
         document.head.appendChild(style);
 
@@ -2250,10 +2503,10 @@
                 (product.imageUrl || 'https://via.placeholder.com/200x260?text=Product');
 
             card.innerHTML = `
-            <img src="${imageUrl}" alt="${product.name}" />
-            <h4>${product.name}</h4>
-            <p>${product.price} ${settings.currency || 'Rs.'}</p>
-        `;
+        <img src="${imageUrl}" alt="${product.name}" />
+        <h4>${product.name}</h4>
+        <p>${product.price} ${settings.currency || 'Rs.'}</p>
+    `;
 
             return card;
         }
@@ -2266,12 +2519,12 @@
                 const postDiv = document.createElement('div');
                 postDiv.className = 'insta-post';
                 postDiv.innerHTML = `
-                <img src="${post.imageUrl}" alt="Instagram post" />
-                <div class="insta-overlay">
-                    <span>❤️ ${post.likes}</span>
-                    <p>${post.caption}</p>
-                </div>
-            `;
+            <img src="${post.imageUrl}" alt="Instagram post" />
+            <div class="insta-overlay">
+                <span>❤️ ${post.likes}</span>
+                <p>${post.caption}</p>
+            </div>
+        `;
                 instaFeed.appendChild(postDiv);
             });
         }
